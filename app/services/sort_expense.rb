@@ -1,16 +1,16 @@
 class SortExpense
   def initialize(args)
-    @params = args[:params]
     @user = args[:user]
-    @expenses = args[:expenses]
+    @approved = args[:approved]
+    @min_amount = args[:min_amount]
+    @max_amount = args[:max_amount]
   end
 
   def return_results
-    maybe_approved.return_users
-  end
-  private
-  def maybe_approved
-    @params[:approved].nil? ? NotApproved.new(user: @user) :
-      Approved.new(user: @user, params: @params)
+    expenses = Expense.not_deleted(@user)
+    expenses = expenses.where(approved: @approved) unless @approved.nil?
+    expenses = expenses.more_than(@min_amount) unless @min_amount.nil?
+    expenses = expenses.less_than(@max_amount) unless @max_amount.nil?
+    expenses
   end
 end

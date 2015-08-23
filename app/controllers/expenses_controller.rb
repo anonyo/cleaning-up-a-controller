@@ -1,13 +1,16 @@
 class ExpensesController < ApplicationController
   before_filter :user, only: [:index, :new, :create]
+  before_filter :user_expense, only: [:update]
   before_filter :expense, only: [:update]
 
   def index
-    @expenses = SortExpense.new(params: params, user: @user).return_results
-
-    @expenses = @expenses.more_than(params[:min_amount]) unless min_amount
-
-    @expenses = @expenses.less_than(params[:max_amount]) unless max_amount
+    args = {
+      user:       @user,
+      approved:   params[:approved],
+      min_amount: params[:min_amount],
+      max_amount: params[:max_amount]
+    }
+    @expenses = SortExpense.new(args).return_results
   end
 
   def new
