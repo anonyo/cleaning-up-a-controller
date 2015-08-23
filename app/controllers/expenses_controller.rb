@@ -1,5 +1,7 @@
 class ExpensesController < ApplicationController
   before_filter :user, only: [:index, :new, :create]
+  before_filter :expense, only: [:update]
+
   def index
     @expenses = SortExpense.new(params: params, user: @user).return_results
 
@@ -9,11 +11,11 @@ class ExpensesController < ApplicationController
   end
 
   def new
+    @user
   end
 
   def create
     @expense = user.expenses.new(expense_params)
-
     if @expense.save
       email_body = "#{@expense.name} by #{user.full_name} needs to be approved"
       mailer = ExpenseMailer.new(address: 'admin@expensr.com', body: email_body)
@@ -26,11 +28,8 @@ class ExpensesController < ApplicationController
   end
 
   def update
-    user = User.find(params[:user_id])
 
-    @expense = user.expenses.find(params[:id])
-
-    if !@expense.approved
+    unless @expense.approved
       @expense.update_attributes!(expense_params)
       flash[:notice] = 'Your expense has been successfully updated'
       redirect_to user_expenses_path(user_id: user.id)
@@ -71,5 +70,9 @@ class ExpensesController < ApplicationController
 
   def user
     @user ||= User.find(params[:user_id])
+  end
+
+  def expense
+    @expense = user.expenses.find(params[:id])
   end
 end
