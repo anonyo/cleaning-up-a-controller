@@ -1,29 +1,17 @@
 class ExpensesController < ApplicationController
+  before_filter :user, only: [:index, :new, :create]
   def index
-    @user = User.find(params[:user_id])
+    @expenses = SortExpense.new(params: params, user: @user).return_results
 
-    if params[:approved].nil?
-      @expenses = Expense.where(user: @user, deleted: false)
-    else
-      @expenses = Expense.where(user: @user, approved: params[:approved], deleted: false)
-    end
+    @expenses = @expenses.more_than(params[:min_amount]) unless min_amount
 
-    if !params[:min_amount].nil?
-      @expenses = @expenses.where('amount > ?', params[:min_amount])
-    end
-
-    if !params[:max_amount].nil?
-      @expenses = @expenses.where('amount < ?', params[:max_amount])
-    end
+    @expenses = @expenses.less_than(params[:max_amount]) unless max_amount
   end
 
   def new
-    @user = User.find(params[:user_id])
   end
 
   def create
-    user = User.find(params[:user_id])
-
     @expense = user.expenses.new(expense_params)
 
     if @expense.save
@@ -71,5 +59,17 @@ class ExpensesController < ApplicationController
 
   def expense_params
     params.require(:expense).permit(:name, :amount, :approved)
+  end
+
+  def min_amount
+    params[:min_amount].nil?
+  end
+
+  def max_amount
+    params[:max_amount].nil?
+  end
+
+  def user
+    @user ||= User.find(params[:user_id])
   end
 end
