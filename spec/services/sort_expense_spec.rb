@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SortExpense do
-  describe '#perform' do
+  describe '#return_results' do
     let!(:user) { create(:user) }
     let!(:approved_expense) { create(:expense, :approved) }
     let!(:unapproved_expense) { create(:expense, :unapproved) }
