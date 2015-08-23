@@ -3,12 +3,8 @@ class Expense < ActiveRecord::Base
 
   validates :amount, presence: true
 
-  def self.pending_users(user)
+  def self.not_deleted(user)
     self.where(user: user, deleted: false)
-  end
-
-  def self.approved_user(user, approved_params)
-    self.where(user: user, approved: approved_params, deleted: false)
   end
 
   def self.more_than(min_amount)
