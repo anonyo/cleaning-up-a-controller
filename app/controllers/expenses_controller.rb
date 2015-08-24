@@ -1,7 +1,7 @@
 class ExpensesController < ApplicationController
-  before_filter :user, only: [:index, :new, :create]
-  before_filter :user_expense, only: [:update]
-  before_filter :expense, only: [:update]
+  before_action :find_user, only: [:index, :new, :create, :update, :destroy]
+  before_action :add_expense_to_user, only: :create
+  before_action :find_user_expense, only: :update
 
   def index
     args = {
@@ -18,13 +18,15 @@ class ExpensesController < ApplicationController
   end
 
   def create
-    @expense = user.expenses.new(expense_params)
-    if @expense.save
-      email_body = "#{@expense.name} by #{user.full_name} needs to be approved"
-      mailer = ExpenseMailer.new(address: 'admin@expensr.com', body: email_body)
-      mailer.deliver
+    args = {
+      user: @user,
+      expense: @expense
+    }
 
-      redirect_to user_expenses_path(user)
+    if @expense.save
+      MailDeliver.new(args).process
+
+      redirect_to user_expenses_path(@user)
     else
       render :new, status: :bad_request
     end
@@ -32,10 +34,10 @@ class ExpensesController < ApplicationController
 
   def update
 
-    unless @expense.approved
-      @expense.update_attributes!(expense_params)
+    unless find_user_expense.approved
+      find_user_expense.update_attributes!(expense_params)
       flash[:notice] = 'Your expense has been successfully updated'
-      redirect_to user_expenses_path(user_id: user.id)
+      redirect_to user_expenses_path(user_id: @user.id)
     else
       flash[:error] = 'You cannot update an approved expense'
       render :edit
@@ -63,19 +65,13 @@ class ExpensesController < ApplicationController
     params.require(:expense).permit(:name, :amount, :approved)
   end
 
-  def min_amount
-    params[:min_amount].nil?
-  end
-
-  def max_amount
-    params[:max_amount].nil?
-  end
-
-  def user
+  def find_user
     @user ||= User.find(params[:user_id])
   end
-
-  def expense
-    @expense = user.expenses.find(params[:id])
+   def add_expense_to_user
+    @expense = @user.expenses.new(expense_params)
+  end
+   def find_user_expense
+    @expense = @user.expenses.find(params[:id])
   end
 end
