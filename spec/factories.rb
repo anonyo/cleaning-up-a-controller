@@ -20,6 +20,10 @@ FactoryGirl.define do
       approved true
     end
 
+    trait :not_deleted do
+      deleted false
+    end
+
     trait :unapproved do
       approved false
     end

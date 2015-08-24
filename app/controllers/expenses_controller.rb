@@ -3,6 +3,7 @@ class ExpensesController < ApplicationController
   before_action :add_expense_to_user, only: :create
   before_action :find_user_expense, only: :update
   before_action :find_expense, only: :approve
+  before_action :expense, only: :destroy
 
   def index
     args = {
@@ -53,11 +54,8 @@ class ExpensesController < ApplicationController
   end
 
   def destroy
-    expense = Expense.find(params[:id])
-    user = User.find(params[:user_id])
-    expense.update_attributes!(deleted: true)
-
-    redirect_to user_expenses_path(user_id: user.id)
+    DestroyExpense.new(expense).process
+    redirect_to user_expenses_path(user_id: @user.id)
   end
 
   private
@@ -78,5 +76,9 @@ class ExpensesController < ApplicationController
 
   def find_expense
     @expense = Expense.find(params[:expense_id])
+  end
+
+  def expense
+    @expense ||= Expense.find(params[:id])
   end
 end
