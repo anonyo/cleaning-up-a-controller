@@ -2,6 +2,7 @@ class ExpensesController < ApplicationController
   before_action :find_user, only: [:index, :new, :create, :update, :destroy]
   before_action :add_expense_to_user, only: :create
   before_action :find_user_expense, only: :update
+  before_action :find_expense, only: :approve
 
   def index
     args = {
@@ -33,9 +34,11 @@ class ExpensesController < ApplicationController
   end
 
   def update
+    args = {expense: @expense,
+            expense_params: expense_params}
 
-    unless find_user_expense.approved
-      find_user_expense.update_attributes!(expense_params)
+    unless @expense.approved
+     ExpenseAttributeUpdater.new(args).process
       flash[:notice] = 'Your expense has been successfully updated'
       redirect_to user_expenses_path(user_id: @user.id)
     else
@@ -45,9 +48,7 @@ class ExpensesController < ApplicationController
   end
 
   def approve
-    @expense = Expense.find(params[:expense_id])
-    @expense.update_attributes!(approved: true)
-
+    ApproveExpense.new(@expense).process
     render :show
   end
 
@@ -73,5 +74,9 @@ class ExpensesController < ApplicationController
   end
    def find_user_expense
     @expense = @user.expenses.find(params[:id])
+  end
+
+  def find_expense
+    @expense = Expense.find(params[:expense_id])
   end
 end
